@@ -1,0 +1,1 @@
+A checkers app running on the server.
