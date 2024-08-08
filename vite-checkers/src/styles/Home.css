@@ -1,0 +1,151 @@
+@import url("https://fonts.googleapis.com/css2?family=Istok+Web:wght@400;700&display=swap");
+
+body {
+  font-family: "Istok Web", sans-serif;
+  font-weight: bold;
+  font-size: medium;
+}
+
+.home-container {
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background-color: rgba(255, 255, 255, 0.7);
+  padding: 1rem;
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: black;
+}
+
+.about-project .about-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.about-project .project-image {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+}
+
+.section-content ol {
+  text-align: left;
+  padding-left: 1.5rem;
+}
+
+.section-content ol li {
+  margin-bottom: 0.5rem;
+}
+
+.nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nav-link {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #ff0000;
+}
+
+.nav-separator {
+  margin: 0 0.5rem;
+  color: #6b7280;
+}
+
+.main-content {
+  flex-grow: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  text-align: center;
+  overflow-y: auto;
+}
+
+.section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #950000;
+}
+
+.section-content {
+  text-align: left;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  color: black;
+}
+
+.game-end-intro {
+  margin-bottom: 0.5rem;
+}
+
+.game-end-list {
+  list-style-position: inside;
+  padding-left: 0;
+}
+
+.game-end-list li {
+  margin-bottom: 0.5rem;
+}
+
+.about-project .project-image {
+  padding-top: 45px;
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.about-project .project-image:hover {
+  transform: scale(1.05);
+  cursor: pointer;
+}
+@keyframes highlightAnimation {
+  0% {
+    background-color: rgba(0, 100, 150, 0.3);
+    box-shadow: 0 0 15px rgba(0, 100, 150, 0.5);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
+
+.about-project.highlight {
+  animation: highlightAnimation 3s ease-out;
+}
+.footer-strip {
+  width: 100%;
+  height: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+.footer-strip-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
