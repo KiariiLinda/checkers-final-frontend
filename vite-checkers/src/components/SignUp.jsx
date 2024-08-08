@@ -37,6 +37,7 @@ const SignUp = () => {
 
   return (
     <div className="signup-container">
+      <h2 className="signup-title">Sign Up</h2>
       <h2 className="signup-title">Create your acccount here</h2>
       <form onSubmit={handleSubmit} className="signup-form">
         <div className="signup-form-group">
@@ -83,5 +84,3 @@ const SignUp = () => {
 };
 
 export default SignUp;
-
-
