@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import "../styles/SignUp.css";
 import { signUp } from "../services/api.js";
 import Checkersboard from "../assets/Checker-Boarders.png";
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+
 
 const SignUp = () => {
   const [username, setUsername] = useState("");

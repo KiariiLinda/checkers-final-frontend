@@ -3,18 +3,22 @@ import { Link, useNavigate } from "react-router-dom";
 import "../styles/SignIn.css";
 import { signIn } from "../services/api.js";
 import { setAuthToken } from "../services/api";
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false); // Loading state
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("Signing in...");
     setError("");
+    setLoading(true); // Start loading
     try {
       const response = await signIn({ email, password });
       console.log("Sign in response:", response);
@@ -28,7 +32,13 @@ const SignIn = () => {
         error.message || "An error occurred during sign in. Please try again."
       );
       setMessage("");
+    } finally {
+      setLoading(false); // Stop loading
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -48,16 +58,25 @@ const SignIn = () => {
           </div>
           <div className="signin-form-group">
             <label htmlFor="password">Password:</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="password-input-container">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="password-toggle-button"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </div>
-          <button type="submit" className="signin-button">
-            Sign In
+          <button type="submit" className="signin-button" disabled={loading}>
+            {loading ? <div className="spinner"></div> : "Sign In"}
           </button>
         </form>
         {message && <p className="signin-message success">{message}</p>}
