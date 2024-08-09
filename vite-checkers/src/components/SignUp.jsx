@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import "../styles/SignUp.css";
 import { signUp } from "../services/api.js";
 import Checkersboard from "../assets/Checker-Boarders.png";
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const SignUp = () => {
   const [username, setUsername] = useState("");
@@ -33,17 +33,23 @@ const SignUp = () => {
       console.error("Sign up error:", error);
       setLoading(false); // Stop the spinner on error
       if (error.message === "User already exists") {
-        setError(`A user with the email ${email} already exists. Please try a different one.`);
+        setError(
+          `A user with the email ${email} already exists. Please try a different one.`
+        );
       } else {
-        setError(error.message || "An error occurred during sign up. Please try again.");
+        setError(
+          error.message || "An error occurred during sign up. Please try again."
+        );
       }
       setMessage("");
-    } finally {
     }
   };
 
   return (
-    <div className="sign-up-content-wrapper" style={{ backgroundImage: `url(${Checkersboard})` }}>
+    <div
+      className="sign-up-content-wrapper"
+      style={{ backgroundImage: `url(${Checkersboard})` }}
+    >
       <div className="signup-container">
         <h2 className="signup-title">Create your account here</h2>
         <form onSubmit={handleSubmit} className="signup-form">
@@ -93,13 +99,22 @@ const SignUp = () => {
             </button>
           </div>
         </form>
-        {loading && (
-          <div className="spinner" aria-live="polite" />
+        {loading && <div className="spinner-home" aria-live="polite" />}
+        {message && (
+          <p className="signup-message success" aria-live="polite">
+            {message}
+          </p>
         )}
-        {message && <p className="signup-message success" aria-live="polite">{message}</p>}
-        {error && <p className="signup-message error" aria-live="assertive">{error}</p>}
+        {error && (
+          <p className="signup-message error" aria-live="assertive">
+            {error}
+          </p>
+        )}
         <p className="signup-signin-link">
-          Already have an account? <Link to="/signin" className="signin-link">Sign In</Link>
+          Already have an account?{" "}
+          <Link to="/signin" className="signin-link">
+            Sign In
+          </Link>
         </p>
       </div>
     </div>

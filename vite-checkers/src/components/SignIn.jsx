@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import "../styles/SignIn.css";
 import { signIn } from "../services/api.js";
 import { setAuthToken } from "../services/api";
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -82,7 +82,10 @@ const SignIn = () => {
         {message && <p className="signin-message success">{message}</p>}
         {error && <p className="signin-message error">{error}</p>}
         <p className="signin-signup-link">
-          Don't have an account? <Link to="/signup">Sign Up</Link>
+          Don't have an account?{" "}
+          <Link to="/signup">
+            <span className="signup-text">Sign Up</span>
+          </Link>
         </p>
       </div>
     </div>
