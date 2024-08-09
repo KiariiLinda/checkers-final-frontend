@@ -151,7 +151,11 @@ const Game = () => {
         if (updatedData.game_over) {
           setIsGameOver(true);
           const winnerValue =
-            updatedData.winner === "computer" ? "Computer" : "Human";
+            updatedData.winner === "draw"
+              ? "Draw"
+              : updatedData.winner === "computer"
+              ? "Computer"
+              : "Human";
           setWinner(winnerValue);
           localStorage.setItem("isGameOver", "true");
           localStorage.setItem("winner", winnerValue);
@@ -313,7 +317,10 @@ const Game = () => {
 
         {isGameOver && (
           <>
-            <div className="game-over-message">Game Over! {winner} wins!</div>
+            <div className="game-over-message">
+              Game Over!{" "}
+              {winner === "Draw" ? "It's a draw!" : `${winner} wins!`}
+            </div>
             <button onClick={startNewGame} className="new-game-button">
               New Game
             </button>
