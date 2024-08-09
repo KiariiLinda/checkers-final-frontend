@@ -1,0 +1,306 @@
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .game-controls {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .game-over-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .game-over-message {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #d32f2f;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #ffcdd2;
+    border-radius: 5px;
+    text-align: center;
+  }
+  
+  .new-game-button {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 10px;
+  }
+  
+  .new-game-button:hover {
+    background-color: #45a049;
+  }
+  
+  .game-board-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .board {
+    display: inline-block;
+    border: 2px solid #000;
+    margin-top: 60px; /* Add space for the buttons */
+  }
+  
+  /* Disabled board */
+  .board.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  
+  /* Disabled buttons */
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .row {
+    display: flex;
+  }
+  
+  .cell {
+    width: 50px;
+    height: 50px;
+    border: 1px solid #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    cursor: pointer;
+  }
+  
+  /* Add alternating colors for the checkerboard pattern */
+  .row:nth-child(odd) .cell:nth-child(even),
+  .row:nth-child(even) .cell:nth-child(odd) {
+    background-color: #b58863;
+  }
+  
+  .row:nth-child(odd) .cell:nth-child(odd),
+  .row:nth-child(even) .cell:nth-child(even) {
+    background-color: #f0d9b5;
+  }
+  
+  .cell.selected {
+    background-color: yellow;
+  }
+  
+  .logging-out {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(97, 97, 97, 0.5);
+    color: white;
+    font-size: 24px;
+    z-index: 1000;
+  }
+  
+  .logout-button,
+  .reset-button {
+    padding: 10px 20px;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .logout-button {
+    background-color: #f44336;
+  }
+  
+  .logout-button:hover {
+    background-color: #d32f2f;
+  }
+  
+  .reset-button {
+    background-color: #4caf50;
+  }
+  
+  .reset-button:hover {
+    background-color: #45a049;
+  }
+  
+  .reset-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  .message {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    text-align: center;
+    width: 100%;
+  }
+  
+  .error-message {
+    color: red;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #ffeeee;
+    border: 1px solid #ffcccc;
+    border-radius: 4px;
+    width: 100%;
+  }
+  
+  .checker-piece {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+  }
+  
+  .game-over-message h2 {
+    margin-bottom: 20px;
+  }
+  
+  .game-over-message button {
+    padding: 10px 20px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .game-over-message button:hover {
+    background-color: #45a049;
+  }
+  
+  /* No moves message */
+  .no-moves-message {
+    font-size: 1em;
+    color: #f57c00;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #ffe0b2;
+    border-radius: 5px;
+  }
+  
+  .current-turn {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #4a90e2;
+    color: white;
+    border-radius: 5px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+  }
+  
+  .cell:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  
+  .thinking-message {
+    font-style: italic;
+    color: #666;
+    width: 100%;
+  }
+  
+  .moves-history {
+    width: 250px;
+    height: 400px;
+    border: 2px solid #4a4a4a;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #f0f0f0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: absolute;
+    top: 300px; /* Adjust this value to align with your board */
+    right: 20px;
+    margin-top: 100px;
+    background-color: #a9c0d6;
+  }
+  
+  .moves-history h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 20px;
+    color: #2c3e50;
+    text-align: center;
+    border-bottom: 2px solid #2c3e50;
+    padding-bottom: 10px;
+  }
+  
+  .moves-history ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    height: calc(100% - 50px);
+    overflow-y: auto;
+  }
+  
+  .moves-history li {
+    padding: 8px 10px;
+    border-bottom: 1px solid #ccc;
+    font-size: 14px;
+    color: #333;
+  }
+  
+  .moves-history li:last-child {
+    border-bottom: none;
+  }
+  
+  .moves-history li:nth-child(even) {
+    background-color: #e8e8e8;
+  }
+  
+  .moves-history ul::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .moves-history ul::-webkit-scrollbar-track {
+    background: #d4d4d4;
+    border-radius: 4px;
+  }
+  
+  .moves-history ul::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+  }
+  
+  .moves-history ul::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  .game-status-banner {
+    background-color: #f0f0f0;
+    padding: 10px;
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .winner-banner {
+    background-color: gold;
+    color: black;
+    padding: 10px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+  }
+  

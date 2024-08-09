@@ -78,6 +78,19 @@ export const makeMove = async (moveData) => {
   }
 };
 
+export const getPossibleMoves = async () => {
+  try {
+    const response = await api.get("/game/possible_moves");
+    console.log("Possible moves:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error in getPossibleMoves:", error);
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch possible moves"
+    );
+  }
+};
+
 export const resetBoard = async () => {
   try {
     const response = await api.post("/game/reset");
