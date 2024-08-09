@@ -62,8 +62,10 @@
   border-radius: 20px;
   cursor: pointer;
   font-size: 16px;
-  transition: background-color 0.3s; /* Smooth transition */
+  transition: background-color 0.3s;
   width: 50%;
+  display: block;
+  margin: 0 auto;
 }
 
 .signin-button:hover {

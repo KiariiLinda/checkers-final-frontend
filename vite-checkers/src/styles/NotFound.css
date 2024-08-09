@@ -1,0 +1,53 @@
+.not-found-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #ffffff; /* White background for the checkers */
+  background-image: linear-gradient(
+      45deg,
+      #f0f0f0 25%,
+      transparent 25%,
+      transparent 75%,
+      #f0f0f0 75%,
+      #f0f0f0
+    ),
+    linear-gradient(
+      45deg,
+      #f0f0f0 25%,
+      transparent 25%,
+      transparent 75%,
+      #f0f0f0 75%,
+      #f0f0f0
+    );
+  background-size: 100px 100px; /* Size of the checkers */
+  position: relative;
+  text-align: center;
+}
+
+.not-found-container h1 {
+  font-size: 3rem;
+  color: #ff0000; /* Red color for emphasis */
+  margin-bottom: 10px;
+}
+
+.not-found-container p {
+  font-size: 1.5rem;
+  color: #333; /* Dark text color */
+  margin-bottom: 20px;
+}
+
+.not-found-container a {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #007bff; /* Button color */
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.not-found-container a:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+}
