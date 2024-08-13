@@ -401,6 +401,7 @@ const Game = () => {
   };
 
   const handleGameOver = (data) => {
+    console.log("Game Over triggered. Data:", data);
     setIsGameOver(true);
     const winnerValue =
       data.winner === "draw"
@@ -408,15 +409,19 @@ const Game = () => {
         : data.winner === "computer"
         ? "Computer"
         : "Human";
+    console.log("Winner determined:", winnerValue);
     setWinner(winnerValue);
     localStorage.setItem("isGameOver", "true");
     localStorage.setItem("winner", winnerValue);
 
     if (winnerValue === "Human") {
+      console.log("Attempting to play win sound");
       playWinSound();
     } else if (winnerValue === "Computer") {
+      console.log("Attempting to play lose sound");
       playLoseSound();
     } else {
+      console.log("Attempting to play draw sound");
       playDrawSound();
     }
   };
