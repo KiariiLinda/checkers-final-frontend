@@ -127,6 +127,41 @@ body {
   justify-content: center;
   align-items: center;
 }
+.game-over-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.game-over-buttons button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 50px !important; /* Match the border-radius of other buttons */
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.game-over-buttons .new-game-button {
+  background-color: #4caf50;
+  color: white;
+}
+
+.game-over-buttons .new-game-button:hover {
+  background-color: #45a049;
+  transform: translateY(-2px);
+}
+
+.game-over-buttons .logout-button {
+  background-color: #dc3545;
+  color: white;
+}
+
+.game-over-buttons .logout-button:hover {
+  background-color: #c82333;
+  transform: translateY(-2px);
+}
 
 .game-over-container {
   display: flex;
@@ -135,38 +170,10 @@ body {
   min-height: 60px;
 }
 
-/* .game-over-message {
-  font-size: 1.2em;
-  font-weight: bold;
-  color: #d32f2f;
-  margin: 10px 0;
-  padding: 10px;
-  background-color: #ffcdd2;
-  border-radius: 5px;
-  text-align: center;
-  visibility: hidden;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-} */
-
 .game-over-message.visible {
   visibility: visible;
   opacity: 1;
 }
-
-/* .new-game-button {
-  background-color: #28a745;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1em;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-  visibility: hidden;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-} */
 
 .new-game-button.visible {
   visibility: visible;
@@ -367,14 +374,9 @@ button:disabled {
 }
 
 .no-moves-message {
-  font-size: 1em;
-  color: #f57c00;
-  margin: 10px 0;
-  padding: 10px;
-  background-color: #ffe0b2;
-  border-radius: 5px;
+  color: #ff6600;
+  font-weight: bold;
 }
-
 .current-turn {
   font-size: 18px;
   font-weight: bold;
@@ -451,9 +453,9 @@ button:disabled {
 }
 
 .moves-history li {
-  padding: 8px 10px;
+  padding: 20px 15px;
   border-bottom: 1px solid #ccc;
-  font-size: 14px;
+  font-size: 16px;
   color: #333;
 }
 
@@ -551,7 +553,7 @@ button:disabled {
   color: white;
   padding: 15px 30px;
   border: none;
-  border-radius: 50px;
+  border-radius: 5px;
   font-size: 20px;
   cursor: pointer;
   transition: all 0.3s ease;

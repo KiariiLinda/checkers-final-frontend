@@ -91,14 +91,23 @@ export const makeComputerMove = async () => {
     return response.data;
   } catch (error) {
     console.error("Error in makeComputerMove:", error);
-    if (error.response && error.response.data) {
-      console.error("Server returned error:", error.response.data);
-      throw new Error(
-        error.response.data.message ||
-          "An error occurred while making the computer move"
-      );
+    if (error.response && error.response.status === 400) {
+      if (error.response.data.game_over) {
+        // Game is already over
+        console.log("Game is already over:", error.response.data);
+        return {
+          game_over: true,
+          winner: error.response.data.winner,
+          message: error.response.data.message || "Game has already ended",
+          computer_moves: [],
+        };
+      }
     }
-    throw error;
+    // For other errors, throw as before
+    throw new Error(
+      error.response?.data?.message ||
+        "An error occurred while making the computer move"
+    );
   }
 };
 
@@ -107,10 +116,17 @@ export const getPossibleMoves = async (row, col) => {
     const response = await api.get(
       `/game/possible_moves?row=${row}&col=${col}`
     );
-    // console.log("Possible moves API response:", response.data);
     return response.data.possible_moves || [];
   } catch (error) {
     console.error("Error in getPossibleMoves:", error);
+    if (
+      error.response &&
+      error.response.status === 400 &&
+      error.response.data.game_over
+    ) {
+      // Game is over, return empty array of possible moves
+      return [];
+    }
     throw new Error(
       error.response?.data?.message || "Failed to fetch possible moves"
     );

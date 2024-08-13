@@ -27,6 +27,7 @@ const Game = () => {
   const loseSoundRef = useRef(new Audio(loseSound));
   const drawSoundRef = useRef(new Audio(drawSound));
 
+  const [isMoveInProgress, setIsMoveInProgress] = useState(false);
   const [gameState, setGameState] = useState(null);
   const [possibleMoves, setPossibleMoves] = useState([]);
   const [error, setError] = useState("");
@@ -116,8 +117,10 @@ const Game = () => {
   }, [gameState]);
 
   useEffect(() => {
-    fetchPossibleMoves();
-  }, [fetchPossibleMoves]);
+    if (!isGameOver) {
+      fetchPossibleMoves();
+    }
+  }, [fetchPossibleMoves, isGameOver]);
 
   useEffect(() => {
     // console.log("selectedPiece updated:", selectedPiece);
@@ -228,6 +231,7 @@ const Game = () => {
   };
 
   const handleMove = async (fromRow, fromCol, toRow, toCol) => {
+    setIsMoveInProgress(true);
     try {
       const srcNotation = `${String.fromCharCode(65 + fromCol)}${fromRow + 1}`;
       const destNotation = `${String.fromCharCode(65 + toCol)}${toRow + 1}`;
@@ -304,6 +308,7 @@ const Game = () => {
             setError("Failed to make the computer move");
           } finally {
             setIsComputerThinking(false);
+            setIsMoveInProgress(false);
           }
         }, 1000); // 1000 ms delay for computer thinking
       } else {
@@ -313,6 +318,7 @@ const Game = () => {
       console.error("Error making move:", err);
       setError(err.message || "Failed to make the move");
       setIsComputerThinking(false);
+      setIsMoveInProgress(false);
     }
   };
 
@@ -458,6 +464,11 @@ const Game = () => {
   };
 
   const handleResetBoard = async () => {
+    if (gameState.current_turn !== "h") {
+      setError("You can only reset the board during your turn.");
+      return;
+    }
+
     setIsLoading(true); // Start loading
     setIsResetting(true);
     try {
@@ -518,7 +529,13 @@ const Game = () => {
         <button
           onClick={handleResetBoard}
           className="reset-button"
-          disabled={isResetting || isGameOver}
+          disabled={
+            isResetting ||
+            isGameOver ||
+            gameState.current_turn !== "h" ||
+            isComputerThinking ||
+            isMoveInProgress
+          }
         >
           {isResetting ? "Resetting..." : "Reset Board"}
         </button>
@@ -537,28 +554,28 @@ const Game = () => {
           possibleMoves.length === 0)) && (
         <div className="game-status-overlay">
           <div className="game-status-content">
-            <h2
-              className={`game-over-message ${
-                isGameOver
-                  ? winner === "Human"
+            {isGameOver && (
+              <h2
+                className={`game-over-message ${
+                  winner === "Human"
                     ? "human-wins"
                     : winner === "Computer"
                     ? "computer-wins"
                     : "draw"
-                  : "no-moves"
-              }`}
-            >
-              {isGameOver
-                ? `Game Over! ${
-                    winner === "Draw" ? "It's a draw!" : `${winner} wins!`
-                  }`
-                : "You have no possible moves. The game will end."}
-            </h2>
-            {isGameOver && (
+                }`}
+              >
+                Game Over!{" "}
+                {winner === "Draw" ? "It's a draw!" : `${winner} wins!`}
+              </h2>
+            )}
+            <div className="game-over-buttons">
               <button onClick={startNewGame} className="new-game-button">
                 New Game
               </button>
-            )}
+              <button onClick={handleLogout} className="logout-button">
+                LOGOUT
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -591,6 +608,15 @@ const Game = () => {
           <p className="info-element">
             Moves Without Capture: {gameState.moves_without_capture}
           </p>
+
+          {/* Add this new element for the "no moves" message */}
+          {!isGameOver &&
+            gameState.current_turn === "h" &&
+            possibleMoves.length === 0 && (
+              <div className="no-moves-message info-element">
+                You have no possible moves. The game will end.
+              </div>
+            )}
         </div>
 
         <div className="game-board-container">
