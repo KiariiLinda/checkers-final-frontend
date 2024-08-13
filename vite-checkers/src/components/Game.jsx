@@ -89,11 +89,24 @@ const Game = () => {
         console.log("Possible moves:", possibleMoves);
         setPossibleMoves(possibleMoves);
         if (possibleMoves.length === 0) {
-          setError("No moves available. The game will end.");
-          setIsGameOver(true);
-          setWinner("Computer");
-          localStorage.setItem("isGameOver", "true");
-          localStorage.setItem("winner", "Computer");
+          // Check if the computer also has no moves
+          const computerMoveData = await makeComputerMove();
+          if (computerMoveData.computer_moves.length === 0) {
+            // Stalemate condition
+            setIsGameOver(true);
+            setWinner("Draw");
+            localStorage.setItem("isGameOver", "true");
+            localStorage.setItem("winner", "Draw");
+            setError(
+              "No moves available for either player. The game ends in a draw."
+            );
+          } else {
+            setError("No moves available. The game will end.");
+            setIsGameOver(true);
+            setWinner("Computer");
+            localStorage.setItem("isGameOver", "true");
+            localStorage.setItem("winner", "Computer");
+          }
         }
       } catch (error) {
         console.error("Error fetching possible moves:", error);
@@ -404,8 +417,7 @@ const Game = () => {
     } else if (winnerValue === "Computer") {
       playLoseSound();
     } else {
-      // In case of a draw, you can decide which sound to play or add a new draw sound
-      playDrawSound(); // or playLoseSound(); or a new drawSound();
+      playDrawSound();
     }
   };
 
