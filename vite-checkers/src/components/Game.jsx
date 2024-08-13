@@ -1,29 +1,46 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   getBoard,
-  makeMove,
+  makeHumanMove,
+  makeComputerMove,
   logout,
   resetBoard,
   getPossibleMoves,
 } from "../services/api";
+
 import "../styles/Game.css";
 import humanPiece from "../assets/humanPiece.png";
 import humanKing from "../assets/humanKing.png";
 import computerPiece from "../assets/computerPiece.png";
 import computerKing from "../assets/computerKing.png";
+import moveSound from "../assets/moveSound.mp3";
+import captureSound from "../assets/captureSound.mp3";
+import winSound from "../assets/winSound.mp3";
+import loseSound from "../assets/loseSound.mp3";
+import drawSound from "../assets/drawSound.mp3";
 
 const Game = () => {
+  const moveSoundRef = useRef(new Audio(moveSound));
+  const captureSoundRef = useRef(new Audio(captureSound));
+  const winSoundRef = useRef(new Audio(winSound));
+  const loseSoundRef = useRef(new Audio(loseSound));
+  const drawSoundRef = useRef(new Audio(drawSound));
+
   const [gameState, setGameState] = useState(null);
   const [possibleMoves, setPossibleMoves] = useState([]);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [greeting, setGreeting] = useState("");
+
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [selectedPiece, setSelectedPiece] = useState(null);
   const [isComputerThinking, setIsComputerThinking] = useState(false);
   const [movesHistory, setMovesHistory] = useState([]);
+  const [possibleMoveDestinations, setPossibleMoveDestinations] = useState([]);
   const [lastComputerMove, setLastComputerMove] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [isGameOver, setIsGameOver] = useState(() => {
     return localStorage.getItem("isGameOver") === "true";
   });
@@ -32,6 +49,7 @@ const Game = () => {
   });
 
   const navigate = useNavigate();
+  // const userName = "User";
 
   const renderPiece = (piece) => {
     switch (piece) {
@@ -67,9 +85,10 @@ const Game = () => {
   const fetchPossibleMoves = useCallback(async () => {
     if (gameState && gameState.current_turn === "h" && !gameState.game_over) {
       try {
-        const data = await getPossibleMoves();
-        setPossibleMoves(data.possible_moves);
-        if (data.possible_moves.length === 0) {
+        const possibleMoves = await getPossibleMoves();
+        console.log("Possible moves:", possibleMoves);
+        setPossibleMoves(possibleMoves);
+        if (possibleMoves.length === 0) {
           setError("No moves available. The game will end.");
           setIsGameOver(true);
           setWinner("Computer");
@@ -87,11 +106,20 @@ const Game = () => {
     fetchPossibleMoves();
   }, [fetchPossibleMoves]);
 
+  useEffect(() => {
+    // console.log("selectedPiece updated:", selectedPiece);
+  }, [selectedPiece]);
+
+  useEffect(() => {
+    // console.log("possibleMoveDestinations updated:", possibleMoveDestinations);
+  }, [possibleMoveDestinations]);
+
   const fetchBoard = useCallback(async () => {
     try {
       const data = await getBoard();
       console.log("Received game data:", data);
       setGameState(data);
+      setGreeting(data.message); // Set the greeting from the backend response
       setError("");
     } catch (err) {
       console.error("Error fetching board:", err);
@@ -108,16 +136,52 @@ const Game = () => {
     }
   }, [navigate, fetchBoard]);
 
-  const handleCellClick = (row, col) => {
-    setError(""); // Clear any existing error messages
+  const handleCellClick = async (row, col) => {
+    console.log(`Cell clicked: row ${row}, col ${col}`);
+    setError("");
     if (isComputerThinking || isGameOver) return;
 
     const piece = gameState.board[row][col];
     const isHumanPiece = piece === "h" || piece === "H";
 
-    if (!selectedPiece) {
+    // If a piece is already selected
+    if (selectedPiece) {
+      // If clicking the same piece, deselect it
+      if (selectedPiece.row === row && selectedPiece.col === col) {
+        setSelectedPiece(null);
+        setPossibleMoveDestinations([]);
+        return;
+      }
+
+      // If clicking another human piece, select the new piece
+      if (isHumanPiece) {
+        setSelectedPiece({ row, col });
+        fetchAndSetPossibleMoves(row, col);
+        return;
+      }
+
+      // Attempt to move to the clicked cell
+      console.log("Attempting move to:", row, col);
+      // console.log(
+      //   "Current possibleMoveDestinations:",
+      //   possibleMoveDestinations
+      // );
+      const isPossibleMove = possibleMoveDestinations.some(
+        (move) => move.to.row === row && move.to.col === col
+      );
+      console.log("Is possible move:", isPossibleMove);
+      if (isPossibleMove) {
+        handleMove(selectedPiece.row, selectedPiece.col, row, col);
+      } else {
+        setError("Invalid move. Please select a highlighted destination.");
+      }
+      setSelectedPiece(null);
+      setPossibleMoveDestinations([]);
+    } else {
+      // If no piece is selected
       if (piece !== " " && isHumanPiece) {
         setSelectedPiece({ row, col });
+        fetchAndSetPossibleMoves(row, col);
       } else {
         setError(
           piece === "c" || piece === "C"
@@ -125,9 +189,28 @@ const Game = () => {
             : "You must select a piece to move"
         );
       }
-    } else {
-      handleMove(selectedPiece.row, selectedPiece.col, row, col);
-      setSelectedPiece(null);
+    }
+  };
+  // Helper function to fetch and set possible moves
+  const fetchAndSetPossibleMoves = async (row, col) => {
+    try {
+      const moves = await getPossibleMoves(row, col);
+      // console.log("Possible moves for selected piece:", moves);
+      const convertedMoves = moves
+        .filter(
+          (move) => move.from === `${String.fromCharCode(65 + col)}${row + 1}`
+        )
+        .map((move) => {
+          const [, toCol, toRow] = move.to.match(/([A-H])(\d)/);
+          return {
+            from: { row, col },
+            to: { row: parseInt(toRow) - 1, col: toCol.charCodeAt(0) - 65 },
+          };
+        });
+      setPossibleMoveDestinations(convertedMoves);
+    } catch (error) {
+      console.error("Error fetching possible moves:", error);
+      setError("Failed to fetch possible moves");
     }
   };
 
@@ -140,25 +223,26 @@ const Game = () => {
       console.log("Sending move data:", moveData);
 
       const initialBoard = gameState.board.map((row) => [...row]);
-      const updatedData = await makeMove(moveData);
-      console.log("Received updated game data after move:", updatedData);
 
-      if (updatedData && updatedData.board) {
+      // Make the human move
+      const humanMoveData = await makeHumanMove(moveData);
+      console.log(
+        "Received updated game data after human move:",
+        humanMoveData
+      );
+
+      if (humanMoveData && humanMoveData.board) {
         const movedPiece = initialBoard[fromRow][fromCol];
         const isHumanKing = movedPiece === "H";
 
-        // Check if the game is over
-        if (updatedData.game_over) {
-          setIsGameOver(true);
-          const winnerValue =
-            updatedData.winner === "draw"
-              ? "Draw"
-              : updatedData.winner === "computer"
-              ? "Computer"
-              : "Human";
-          setWinner(winnerValue);
-          localStorage.setItem("isGameOver", "true");
-          localStorage.setItem("winner", winnerValue);
+        const captureOccurred =
+          Math.abs(fromRow - toRow) > 1 || Math.abs(fromCol - toCol) > 1;
+
+        // Play sound immediately after the human move
+        if (captureOccurred) {
+          playCaptureSound();
+        } else {
+          playMoveSound();
         }
 
         // Add the human move to the history immediately
@@ -167,21 +251,47 @@ const Game = () => {
         }: ${srcNotation} to ${destNotation}`;
         setMovesHistory((prevMoves) => [...prevMoves, humanMove]);
 
-        // Update the game state immediately, including current_turn
+        // Update the game state immediately after human move
         setGameState((prevState) => ({
           ...prevState,
-          ...updatedData,
+          ...humanMoveData,
           current_turn: "c", // Set to computer's turn after human move
         }));
 
         setError("");
+        setPossibleMoveDestinations([]); // Clear possible move destinations
+
+        // Check if the game is over after human move
+        if (humanMoveData.game_over) {
+          handleGameOver(humanMoveData);
+          return;
+        }
 
         // Now set computer thinking to true
         setIsComputerThinking(true);
 
         // Introduce a delay for computer's thinking
-        setTimeout(() => {
-          handleComputerMove(updatedData, initialBoard);
+        setTimeout(async () => {
+          try {
+            // Make the computer move
+            const computerMoveData = await makeComputerMove();
+            console.log(
+              "Received updated game data after computer move:",
+              computerMoveData
+            );
+
+            handleComputerMove(computerMoveData, initialBoard);
+
+            // Check if the game is over after computer move
+            if (computerMoveData.game_over) {
+              handleGameOver(computerMoveData);
+            }
+          } catch (error) {
+            console.error("Error making computer move:", error);
+            setError("Failed to make the computer move");
+          } finally {
+            setIsComputerThinking(false);
+          }
         }, 1000); // 1000 ms delay for computer thinking
       } else {
         setError("Received invalid game data after move");
@@ -189,36 +299,113 @@ const Game = () => {
     } catch (err) {
       console.error("Error making move:", err);
       setError(err.message || "Failed to make the move");
-    } finally {
-      setIsComputerThinking(false); // Ensure this is reset after the timeout
+      setIsComputerThinking(false);
     }
   };
 
-  const handleComputerMove = (updatedData, initialBoard) => {
-    // Add the computer's move to the history
-    if (updatedData.computer_moves && updatedData.computer_moves.length > 0) {
-      const computerMove = updatedData.computer_moves[0];
+  const playMoveSound = () => {
+    moveSoundRef.current
+      .play()
+      .catch((error) => console.error("Error playing sound:", error));
+  };
+
+  const playCaptureSound = () => {
+    captureSoundRef.current
+      .play()
+      .catch((error) => console.error("Error playing capture sound:", error));
+  };
+
+  const playWinSound = () => {
+    winSoundRef.current
+      .play()
+      .catch((error) => console.error("Error playing win sound:", error));
+  };
+
+  const playLoseSound = () => {
+    loseSoundRef.current
+      .play()
+      .catch((error) => console.error("Error playing lose sound:", error));
+  };
+
+  const playDrawSound = () => {
+    drawSoundRef.current
+      .play()
+      .catch((error) => console.error("Error playing draw sound:", error));
+  };
+
+  const handleComputerMove = (computerMoveData, initialBoard) => {
+    if (
+      computerMoveData.computer_moves &&
+      computerMoveData.computer_moves.length > 0
+    ) {
+      const computerMove = computerMoveData.computer_moves[0];
+      console.log("Computer move:", computerMove); // For debugging
       setLastComputerMove(computerMove);
 
-      const [fromSquare, toSquare] = computerMove.split("-");
-      const [fromCol, fromRow] = fromSquare.split("");
-      const computerPiece =
-        initialBoard[Number(fromRow) - 1][fromCol.charCodeAt(0) - 65];
-      const isComputerKing = computerPiece === "C";
+      // Split the move into parts, expecting "fromSquare to toSquare" format
+      const [fromSquare, , toSquare] = computerMove.split(" ");
 
-      const newMove = `${
-        isComputerKing ? "Computer King" : "Computer"
-      }: ${computerMove}`;
-      setMovesHistory((prevMoves) => [...prevMoves, newMove]);
+      if (fromSquare && toSquare) {
+        const [fromCol, fromRow] = fromSquare.split("");
+        const [toCol, toRow] = toSquare.split("");
 
-      // Update the game state again to reflect the computer's move
-      setGameState((prevState) => ({
-        ...prevState,
-        board: updatedData.board,
-        current_turn: "h", // Set back to human's turn after computer move
-        moves_without_capture: updatedData.moves_without_capture,
-        message: updatedData.message,
-      }));
+        const computerPiece =
+          initialBoard[Number(fromRow) - 1][fromCol.charCodeAt(0) - 65];
+        const isComputerKing = computerPiece === "C";
+
+        const captureOccurred =
+          Math.abs(Number(fromRow) - Number(toRow)) > 1 ||
+          Math.abs(fromCol.charCodeAt(0) - toCol.charCodeAt(0)) > 1;
+
+        // Play sound immediately after the computer move
+        if (captureOccurred) {
+          playCaptureSound();
+        } else {
+          playMoveSound();
+        }
+
+        const newMove = `${
+          isComputerKing ? "Computer King" : "Computer"
+        }: ${computerMove}`;
+        setMovesHistory((prevMoves) => [...prevMoves, newMove]);
+
+        // Update the game state to reflect the computer's move
+        setGameState((prevState) => ({
+          ...prevState,
+          board: computerMoveData.board,
+          current_turn: "h", // Set back to human's turn after computer move
+          moves_without_capture: computerMoveData.moves_without_capture,
+          message: computerMoveData.message,
+        }));
+      } else {
+        console.error("Invalid computer move format:", computerMove);
+        setError("Received invalid computer move data");
+      }
+    } else {
+      console.error("No computer moves received");
+      setError("No computer moves received");
+    }
+  };
+
+  const handleGameOver = (data) => {
+    setIsGameOver(true);
+    const winnerValue =
+      data.winner === "draw"
+        ? "Draw"
+        : data.winner === "computer"
+        ? "Computer"
+        : "Human";
+    setWinner(winnerValue);
+    localStorage.setItem("isGameOver", "true");
+    localStorage.setItem("winner", winnerValue);
+
+    if (winnerValue === "Human") {
+      playWinSound();
+    } else if (winnerValue === "Computer") {
+      playLoseSound();
+    } else {
+      // In case of a draw, you can decide which sound to play or add a new draw sound
+      playDrawSound(); // or playLoseSound(); or a new drawSound();
     }
   };
 
@@ -254,6 +441,7 @@ const Game = () => {
   };
 
   const handleResetBoard = async () => {
+    setIsLoading(true); // Start loading
     setIsResetting(true);
     try {
       const resetData = await resetBoard();
@@ -265,6 +453,7 @@ const Game = () => {
         setSelectedPiece(null);
         setMovesHistory([]);
         setLastComputerMove("");
+        setPossibleMoveDestinations([]); // Clear possible move destinations
         setMessage("Board has been reset");
       } else {
         setMessage(resetData.message);
@@ -276,6 +465,7 @@ const Game = () => {
       setError("Failed to reset the board");
     } finally {
       setIsResetting(false);
+      setIsLoading(false); // Stop loading
       setTimeout(() => setMessage(""), 10000);
     }
   };
@@ -289,12 +479,12 @@ const Game = () => {
   }, [gameState]);
 
   useEffect(() => {
-    console.log(`Game over status changed: ${isGameOver}`);
+    console.log(`Game over status: ${isGameOver}`);
     console.log(`Winner: ${winner}`);
   }, [isGameOver, winner]);
 
   if (isLoggingOut) {
-    return <div className="logging-out">Logging Out...</div>;
+    return <div className="logging-out">Logging Out</div>;
   }
 
   if (!gameState) {
@@ -302,8 +492,12 @@ const Game = () => {
   }
 
   return (
-    <div className="game-container">
-      <div className="game-controls">
+    <div className="game-background">
+      <header className="game-header">
+        <h1>{greeting || "Checkers Game"}</h1>
+      </header>
+
+      <div className="button-container">
         <button
           onClick={handleResetBoard}
           className="reset-button"
@@ -314,91 +508,131 @@ const Game = () => {
         <button onClick={handleLogout} className="logout-button">
           Logout
         </button>
+      </div>
 
-        {isGameOver && (
-          <>
-            <div className="game-over-message">
-              Game Over!{" "}
-              {winner === "Draw" ? "It's a draw!" : `${winner} wins!`}
-            </div>
-            <button onClick={startNewGame} className="new-game-button">
-              New Game
-            </button>
-          </>
-        )}
+      {/* {greeting && <Greeting message={greeting} />} */}
 
-        {gameState &&
+      {(isGameOver ||
+        (!isLoading &&
+          !isResetting &&
+          gameState &&
           gameState.current_turn === "h" &&
-          possibleMoves.length === 0 &&
-          !isGameOver && (
-            <div className="no-moves-message">
-              You have no possible moves. The game will end.
-            </div>
-          )}
-      </div>
-
-      <div className="game-board-container">
-        <h2>Game Board</h2>
-        {message && <div className="message">{message}</div>}
-        {error && <div className="error-message">{error}</div>}
-
-        <p
-          className={`current-turn ${
-            gameState.current_turn === "h" ? "human-turn" : ""
-          }`}
-        >
-          Current Turn: {gameState.current_turn === "h" ? "Human" : "Computer"}
-        </p>
-
-        {isComputerThinking && (
-          <p className="thinking-message">Computer is thinking...</p>
-        )}
-        <p>Moves Without Capture: {gameState.moves_without_capture}</p>
-        <p>{gameState.message}</p>
-        <div
-          className={`board ${
-            isGameOver ||
-            isResetting ||
-            (gameState.current_turn === "h" && possibleMoves.length === 0)
-              ? "disabled"
-              : ""
-          }`}
-        >
-          {gameState.board.map((row, rowIndex) => (
-            <div key={rowIndex} className="row">
-              {row.map((cell, cellIndex) => (
-                <button
-                  key={cellIndex}
-                  className={`cell ${
-                    selectedPiece &&
-                    selectedPiece.row === rowIndex &&
-                    selectedPiece.col === cellIndex
-                      ? "selected"
-                      : ""
-                  }`}
-                  onClick={() => handleCellClick(rowIndex, cellIndex)}
-                  disabled={
-                    isGameOver ||
-                    isResetting ||
-                    (gameState.current_turn === "h" &&
-                      possibleMoves.length === 0)
-                  }
-                >
-                  {renderPiece(cell)}
-                </button>
-              ))}
-            </div>
-          ))}
+          possibleMoves.length === 0)) && (
+        <div className="game-status-overlay">
+          <div className="game-status-content">
+            <h2
+              className={`game-over-message ${
+                isGameOver
+                  ? winner === "Human"
+                    ? "human-wins"
+                    : winner === "Computer"
+                    ? "computer-wins"
+                    : "draw"
+                  : "no-moves"
+              }`}
+            >
+              {isGameOver
+                ? `Game Over! ${
+                    winner === "Draw" ? "It's a draw!" : `${winner} wins!`
+                  }`
+                : "You have no possible moves. The game will end."}
+            </h2>
+            {isGameOver && (
+              <button onClick={startNewGame} className="new-game-button">
+                New Game
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="moves-history">
-        <h3>Moves History</h3>
-        <ul>
-          {movesHistory.map((move, index) => (
-            <li key={index}>{move}</li>
-          ))}
-        </ul>
+      <div className="game-container-wrapper">
+        <div className="game-info-container">
+          {message && <div className="message info-element">{message}</div>}
+          <div className="error-message-container info-element">
+            <div className={`error-message ${error ? "visible" : ""}`}>
+              {error}
+            </div>
+          </div>
+
+          <div className="turn-indicator info-element">
+            <span>Current Turn: </span>
+            <span
+              className={`current-turn ${
+                gameState.current_turn === "h" ? "human-turn" : "computer-turn"
+              }`}
+            >
+              {gameState.current_turn === "h" ? "Human" : "Computer"}
+            </span>
+          </div>
+
+          {isComputerThinking && (
+            <p className="thinking-message info-element">
+              Computer is thinking...
+            </p>
+          )}
+          <p className="info-element">
+            Moves Without Capture: {gameState.moves_without_capture}
+          </p>
+        </div>
+
+        <div className="game-board-container">
+          <div
+            className={`board ${
+              isGameOver ||
+              isResetting ||
+              (gameState.current_turn === "h" && possibleMoves.length === 0)
+                ? "disabled"
+                : ""
+            }`}
+          >
+            {gameState.board.map((row, rowIndex) => (
+              <div key={rowIndex} className="row">
+                {row.map((cell, cellIndex) => (
+                  <button
+                    key={cellIndex}
+                    className={`cell 
+                        ${
+                          selectedPiece &&
+                          selectedPiece.row === rowIndex &&
+                          selectedPiece.col === cellIndex
+                            ? "selected"
+                            : ""
+                        }
+                        ${
+                          possibleMoveDestinations.some(
+                            (move) =>
+                              move.to.row === rowIndex &&
+                              move.to.col === cellIndex
+                          )
+                            ? "possible-move"
+                            : ""
+                        }
+                      `}
+                    onClick={() => handleCellClick(rowIndex, cellIndex)}
+                    disabled={
+                      isGameOver ||
+                      isResetting ||
+                      (gameState.current_turn === "h" &&
+                        possibleMoves.length === 0)
+                    }
+                  >
+                    {renderPiece(cell, rowIndex, cellIndex)}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="moves-history">
+          <h3>Moves History</h3>
+          <ul>
+            {movesHistory.map((move, index) => (
+              <li key={index}>{move}</li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
