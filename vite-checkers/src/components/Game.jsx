@@ -89,11 +89,24 @@ const Game = () => {
         console.log("Possible moves:", possibleMoves);
         setPossibleMoves(possibleMoves);
         if (possibleMoves.length === 0) {
-          setError("No moves available. The game will end.");
-          setIsGameOver(true);
-          setWinner("Computer");
-          localStorage.setItem("isGameOver", "true");
-          localStorage.setItem("winner", "Computer");
+          // Check if the computer also has no moves
+          const computerMoveData = await makeComputerMove();
+          if (computerMoveData.computer_moves.length === 0) {
+            // Stalemate condition
+            setIsGameOver(true);
+            setWinner("Draw");
+            localStorage.setItem("isGameOver", "true");
+            localStorage.setItem("winner", "Draw");
+            setError(
+              "No moves available for either player. The game ends in a draw."
+            );
+          } else {
+            setError("No moves available. The game will end.");
+            setIsGameOver(true);
+            setWinner("Computer");
+            localStorage.setItem("isGameOver", "true");
+            localStorage.setItem("winner", "Computer");
+          }
         }
       } catch (error) {
         console.error("Error fetching possible moves:", error);
@@ -388,6 +401,7 @@ const Game = () => {
   };
 
   const handleGameOver = (data) => {
+    console.log("Game Over triggered. Data:", data);
     setIsGameOver(true);
     const winnerValue =
       data.winner === "draw"
@@ -395,17 +409,20 @@ const Game = () => {
         : data.winner === "computer"
         ? "Computer"
         : "Human";
+    console.log("Winner determined:", winnerValue);
     setWinner(winnerValue);
     localStorage.setItem("isGameOver", "true");
     localStorage.setItem("winner", winnerValue);
 
     if (winnerValue === "Human") {
+      console.log("Attempting to play win sound");
       playWinSound();
     } else if (winnerValue === "Computer") {
+      console.log("Attempting to play lose sound");
       playLoseSound();
     } else {
-      // In case of a draw, you can decide which sound to play or add a new draw sound
-      playDrawSound(); // or playLoseSound(); or a new drawSound();
+      console.log("Attempting to play draw sound");
+      playDrawSound();
     }
   };
 
