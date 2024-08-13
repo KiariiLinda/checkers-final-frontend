@@ -53,8 +53,8 @@ export const signIn = async (credentials) => {
 export const getBoard = async () => {
   try {
     const response = await api.get("/game/board");
-    console.log("Raw API response:", response);
-    console.log("Board data:", response.data);
+    // console.log("Raw API response:", response);
+    // console.log("Board data:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error in getBoard:", error);
@@ -64,25 +64,51 @@ export const getBoard = async () => {
   }
 };
 
-export const makeMove = async (moveData) => {
+export const makeHumanMove = async (moveData) => {
+  console.log("makeHumanMove called with data:", moveData);
   try {
-    const response = await api.put("/game/make_move", moveData);
+    const response = await api.put("/game/make_human_move", moveData);
+    console.log("Human move successful, response data:", response.data);
     return response.data;
   } catch (error) {
+    console.error("Error in makeHumanMove:", error);
     if (error.response && error.response.data) {
+      console.error("Server returned error:", error.response.data);
       throw new Error(
-        error.response.data.message || "An error occurred while making the move"
+        error.response.data.message ||
+          "An error occurred while making the human move"
       );
     }
     throw error;
   }
 };
 
-export const getPossibleMoves = async () => {
+export const makeComputerMove = async () => {
+  console.log("makeComputerMove called");
   try {
-    const response = await api.get("/game/possible_moves");
-    console.log("Possible moves:", response.data);
+    const response = await api.get("/game/make_computer_move");
+    console.log("Computer move successful, response data:", response.data);
     return response.data;
+  } catch (error) {
+    console.error("Error in makeComputerMove:", error);
+    if (error.response && error.response.data) {
+      console.error("Server returned error:", error.response.data);
+      throw new Error(
+        error.response.data.message ||
+          "An error occurred while making the computer move"
+      );
+    }
+    throw error;
+  }
+};
+
+export const getPossibleMoves = async (row, col) => {
+  try {
+    const response = await api.get(
+      `/game/possible_moves?row=${row}&col=${col}`
+    );
+    // console.log("Possible moves API response:", response.data);
+    return response.data.possible_moves || [];
   } catch (error) {
     console.error("Error in getPossibleMoves:", error);
     throw new Error(
@@ -94,12 +120,12 @@ export const getPossibleMoves = async () => {
 export const resetBoard = async () => {
   try {
     const response = await api.post("/game/reset");
-    console.log("Reset board response:", response);
+    // console.log("Reset board API response:", response);
     return response.data;
   } catch (error) {
     if (error.response && error.response.status === 400) {
       // The board is already in its initial state
-      console.log("Board is already in initial state");
+      // console.log("Board is already in initial state");
       return { message: "Board is already in initial state" };
     }
     console.error("Error in resetBoard:", error);
@@ -112,7 +138,5 @@ export const resetBoard = async () => {
 export const logout = () => {
   localStorage.removeItem("token");
 };
-
-// Add more API calls as needed
 
 export default api;
