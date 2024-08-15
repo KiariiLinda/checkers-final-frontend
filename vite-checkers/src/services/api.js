@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://127.0.0.1:9000";
+const API_URL = "https://checkers-final-backend.onrender.com";
 
 const api = axios.create({
   baseURL: API_URL,
