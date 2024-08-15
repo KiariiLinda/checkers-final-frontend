@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from "react"; // eslint-disable-line no-unused-vars
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/SignIn.css";
 import { signIn } from "../services/api.js";
@@ -82,7 +82,7 @@ const SignIn = () => {
         {message && <p className="signin-message success">{message}</p>}
         {error && <p className="signin-message error">{error}</p>}
         <p className="signin-signup-link">
-          Don't have an account?{" "}
+          Dont have an account?{" "}
           <Link to="/signup">
             <span className="signup-text">Sign Up</span>
           </Link>

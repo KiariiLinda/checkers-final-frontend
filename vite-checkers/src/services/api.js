@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://127.0.0.1:9000"; // Replace with your backend URL
+const API_URL = "http://127.0.0.1:9000";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -49,7 +49,6 @@ export const signIn = async (credentials) => {
   }
 };
 
-// in api.js
 export const getBoard = async () => {
   try {
     const response = await api.get("/game/board");

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react"; // eslint-disable-line no-unused-vars
 import { useNavigate } from "react-router-dom";
 import {
   getBoard,
@@ -21,12 +21,6 @@ import loseSound from "../assets/loseSound.mp3";
 import drawSound from "../assets/drawSound.mp3";
 
 const Game = () => {
-  const moveSoundRef = useRef(new Audio(moveSound));
-  const captureSoundRef = useRef(new Audio(captureSound));
-  const winSoundRef = useRef(new Audio(winSound));
-  const loseSoundRef = useRef(new Audio(loseSound));
-  const drawSoundRef = useRef(new Audio(drawSound));
-
   const [isMoveInProgress, setIsMoveInProgress] = useState(false);
   const [gameState, setGameState] = useState(null);
   const [possibleMoves, setPossibleMoves] = useState([]);
@@ -34,13 +28,21 @@ const Game = () => {
   const [message, setMessage] = useState("");
   const [greeting, setGreeting] = useState("");
 
+  const [humanCapturedPieces, setHumanCapturedPieces] = useState(() => {
+    return parseInt(localStorage.getItem("humanCapturedPieces") || "0");
+  });
+
+  const [computerCapturedPieces, setComputerCapturedPieces] = useState(() => {
+    return parseInt(localStorage.getItem("computerCapturedPieces") || "0");
+  });
+
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [selectedPiece, setSelectedPiece] = useState(null);
   const [isComputerThinking, setIsComputerThinking] = useState(false);
   const [movesHistory, setMovesHistory] = useState([]);
   const [possibleMoveDestinations, setPossibleMoveDestinations] = useState([]);
-  const [lastComputerMove, setLastComputerMove] = useState("");
+  const [lastComputerMove, setLastComputerMove] = useState(""); // eslint-disable-line no-unused-vars
   const [isLoading, setIsLoading] = useState(false);
   const [isGameOver, setIsGameOver] = useState(() => {
     return localStorage.getItem("isGameOver") === "true";
@@ -51,6 +53,22 @@ const Game = () => {
 
   const navigate = useNavigate();
   // const userName = "User";
+
+  const [sounds] = useState(() => ({
+    move: new Audio(moveSound),
+    capture: new Audio(captureSound),
+    win: new Audio(winSound),
+    lose: new Audio(loseSound),
+    draw: new Audio(drawSound),
+  }));
+
+  const playSound = async (soundType) => {
+    try {
+      await sounds[soundType].play();
+    } catch (error) {
+      console.error(`Error playing ${soundType} sound:`, error);
+    }
+  };
 
   const renderPiece = (piece) => {
     switch (piece) {
@@ -81,6 +99,22 @@ const Game = () => {
       default:
         return null;
     }
+  };
+
+  const renderCapturedPieces = (count, pieceType) => {
+    if (count <= 0) return null;
+    const pieces = [];
+    for (let i = 0; i < count; i++) {
+      pieces.push(
+        <img
+          key={i}
+          src={pieceType === "human" ? computerPiece : humanPiece}
+          alt={`Captured ${pieceType} piece`}
+          className="captured-piece-image"
+        />
+      );
+    }
+    return pieces;
   };
 
   const fetchPossibleMoves = useCallback(async () => {
@@ -135,7 +169,34 @@ const Game = () => {
       const data = await getBoard();
       console.log("Received game data:", data);
       setGameState(data);
-      setGreeting(data.message); // Set the greeting from the backend response
+      setGreeting(data.message);
+
+      // Use the greater of the stored value and the new value from the server
+      const storedHumanCaptured = parseInt(
+        localStorage.getItem("humanCapturedPieces") || "0"
+      );
+      const storedComputerCaptured = parseInt(
+        localStorage.getItem("computerCapturedPieces") || "0"
+      );
+
+      const newHumanCaptured = Math.max(
+        storedHumanCaptured,
+        data.human_captured_pieces || 0
+      );
+      const newComputerCaptured = Math.max(
+        storedComputerCaptured,
+        data.computer_captured_pieces || 0
+      );
+
+      setHumanCapturedPieces(newHumanCaptured);
+      setComputerCapturedPieces(newComputerCaptured);
+
+      localStorage.setItem("humanCapturedPieces", newHumanCaptured.toString());
+      localStorage.setItem(
+        "computerCapturedPieces",
+        newComputerCaptured.toString()
+      );
+
       setError("");
     } catch (err) {
       console.error("Error fetching board:", err);
@@ -155,7 +216,13 @@ const Game = () => {
   const handleCellClick = async (row, col) => {
     console.log(`Cell clicked: row ${row}, col ${col}`);
     setError("");
-    if (isComputerThinking || isGameOver) return;
+    if (
+      isComputerThinking ||
+      isGameOver ||
+      isMoveInProgress ||
+      gameState.current_turn !== "h"
+    )
+      return;
 
     const piece = gameState.board[row][col];
     const isHumanPiece = piece === "h" || piece === "H";
@@ -257,10 +324,17 @@ const Game = () => {
 
         // Play sound immediately after the human move
         if (captureOccurred) {
-          playCaptureSound();
+          await playSound("capture");
         } else {
-          playMoveSound();
+          await playSound("move");
         }
+
+        const newHumanCaptured = humanMoveData.human_captured_pieces || 0;
+        setHumanCapturedPieces(newHumanCaptured);
+        localStorage.setItem(
+          "humanCapturedPieces",
+          newHumanCaptured.toString()
+        );
 
         // Add the human move to the history immediately
         const humanMove = `${
@@ -280,7 +354,7 @@ const Game = () => {
 
         // Check if the game is over after human move
         if (humanMoveData.game_over) {
-          handleGameOver(humanMoveData);
+          await handleGameOver(humanMoveData);
           return;
         }
 
@@ -301,7 +375,7 @@ const Game = () => {
 
             // Check if the game is over after computer move
             if (computerMoveData.game_over) {
-              handleGameOver(computerMoveData);
+              await handleGameOver(computerMoveData);
             }
           } catch (error) {
             console.error("Error making computer move:", error);
@@ -317,42 +391,13 @@ const Game = () => {
     } catch (err) {
       console.error("Error making move:", err);
       setError(err.message || "Failed to make the move");
+    } finally {
       setIsComputerThinking(false);
       setIsMoveInProgress(false);
     }
   };
 
-  const playMoveSound = () => {
-    moveSoundRef.current
-      .play()
-      .catch((error) => console.error("Error playing sound:", error));
-  };
-
-  const playCaptureSound = () => {
-    captureSoundRef.current
-      .play()
-      .catch((error) => console.error("Error playing capture sound:", error));
-  };
-
-  const playWinSound = () => {
-    winSoundRef.current
-      .play()
-      .catch((error) => console.error("Error playing win sound:", error));
-  };
-
-  const playLoseSound = () => {
-    loseSoundRef.current
-      .play()
-      .catch((error) => console.error("Error playing lose sound:", error));
-  };
-
-  const playDrawSound = () => {
-    drawSoundRef.current
-      .play()
-      .catch((error) => console.error("Error playing draw sound:", error));
-  };
-
-  const handleComputerMove = (computerMoveData, initialBoard) => {
+  const handleComputerMove = async (computerMoveData, initialBoard) => {
     if (
       computerMoveData.computer_moves &&
       computerMoveData.computer_moves.length > 0
@@ -376,11 +421,18 @@ const Game = () => {
           Math.abs(Number(fromRow) - Number(toRow)) > 1 ||
           Math.abs(fromCol.charCodeAt(0) - toCol.charCodeAt(0)) > 1;
 
-        // Play sound immediately after the computer move
+        // Play sound for computer move
         if (captureOccurred) {
-          playCaptureSound();
+          await playSound("capture");
+          const newComputerCaptured =
+            computerMoveData.computer_captured_pieces || 0;
+          setComputerCapturedPieces(newComputerCaptured);
+          localStorage.setItem(
+            "computerCapturedPieces",
+            newComputerCaptured.toString()
+          );
         } else {
-          playMoveSound();
+          await playSound("move");
         }
 
         const newMove = `${
@@ -406,7 +458,7 @@ const Game = () => {
     }
   };
 
-  const handleGameOver = (data) => {
+  const handleGameOver = async (data) => {
     console.log("Game Over triggered. Data:", data);
     setIsGameOver(true);
     const winnerValue =
@@ -421,14 +473,11 @@ const Game = () => {
     localStorage.setItem("winner", winnerValue);
 
     if (winnerValue === "Human") {
-      console.log("Attempting to play win sound");
-      playWinSound();
+      await playSound("win");
     } else if (winnerValue === "Computer") {
-      console.log("Attempting to play lose sound");
-      playLoseSound();
+      await playSound("lose");
     } else {
-      console.log("Attempting to play draw sound");
-      playDrawSound();
+      await playSound("draw");
     }
   };
 
@@ -451,6 +500,10 @@ const Game = () => {
       setSelectedPiece(null);
       setMovesHistory([]);
       setLastComputerMove("");
+      setHumanCapturedPieces(0);
+      setComputerCapturedPieces(0);
+      localStorage.setItem("humanCapturedPieces", "0");
+      localStorage.setItem("computerCapturedPieces", "0");
       setMessage("New game started");
       localStorage.removeItem("isGameOver");
       localStorage.removeItem("winner");
@@ -481,6 +534,10 @@ const Game = () => {
         setSelectedPiece(null);
         setMovesHistory([]);
         setLastComputerMove("");
+        setHumanCapturedPieces(0);
+        setComputerCapturedPieces(0);
+        localStorage.setItem("humanCapturedPieces", "0");
+        localStorage.setItem("computerCapturedPieces", "0");
         setPossibleMoveDestinations([]); // Clear possible move destinations
         setMessage("Board has been reset");
       } else {
@@ -497,6 +554,10 @@ const Game = () => {
       setTimeout(() => setMessage(""), 10000);
     }
   };
+
+  useEffect(() => {
+    Object.values(sounds).forEach((sound) => sound.load());
+  }, [sounds]);
 
   useEffect(() => {
     console.log("Moves history updated:", movesHistory);
@@ -620,6 +681,12 @@ const Game = () => {
         </div>
 
         <div className="game-board-container">
+          <div className="captured-pieces human-captured">
+            <p>Human Captured: </p>
+            <div className="captured-pieces-images">
+              {renderCapturedPieces(humanCapturedPieces, "human")}
+            </div>
+          </div>
           <div
             className={`board ${
               isGameOver ||
@@ -665,6 +732,12 @@ const Game = () => {
                 ))}
               </div>
             ))}
+          </div>
+          <div className="captured-pieces computer-captured">
+            <p>Computer Captured: </p>
+            <div className="captured-pieces-images">
+              {renderCapturedPieces(computerCapturedPieces, "computer")}
+            </div>
           </div>
         </div>
 

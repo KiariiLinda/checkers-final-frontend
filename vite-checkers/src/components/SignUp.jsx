@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from "react"; // eslint-disable-line no-unused-vars
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/SignUp.css";
 import { signUp } from "../services/api.js";
