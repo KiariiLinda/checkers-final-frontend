@@ -581,127 +581,130 @@ const Game = () => {
   }
 
   return (
-    <div className="game-background">
-      <header className="game-header">
-        <h1>{greeting || "Checkers Game"}</h1>
-      </header>
+    <div className="body2">
+      <div className="game-background">
+        <header className="game-header">
+          <h1>{greeting || "Checkers Game"}</h1>
+        </header>
 
-      <div className="button-container">
-        <button
-          onClick={handleResetBoard}
-          className="reset-button"
-          disabled={
-            isResetting ||
-            isGameOver ||
-            gameState.current_turn !== "h" ||
-            isComputerThinking ||
-            isMoveInProgress
-          }
-        >
-          {isResetting ? "Resetting..." : "Reset Board"}
-        </button>
-        <button onClick={handleLogout} className="logout-button">
-          Logout
-        </button>
-      </div>
+        <div className="button-container">
+          <button
+            onClick={handleResetBoard}
+            className="reset-button"
+            disabled={
+              isResetting ||
+              isGameOver ||
+              gameState.current_turn !== "h" ||
+              isComputerThinking ||
+              isMoveInProgress
+            }
+          >
+            {isResetting ? "Resetting..." : "Reset Board"}
+          </button>
+          <button onClick={handleLogout} className="logout-button">
+            Logout
+          </button>
+        </div>
 
-      {/* {greeting && <Greeting message={greeting} />} */}
+        {/* {greeting && <Greeting message={greeting} />} */}
 
-      {(isGameOver ||
-        (!isLoading &&
-          !isResetting &&
-          gameState &&
-          gameState.current_turn === "h" &&
-          possibleMoves.length === 0)) && (
-        <div className="game-status-overlay">
-          <div className="game-status-content">
-            {isGameOver && (
-              <h2
-                className={`game-over-message ${
-                  winner === "Human"
-                    ? "human-wins"
-                    : winner === "Computer"
-                    ? "computer-wins"
-                    : "draw"
+        {(isGameOver ||
+          (!isLoading &&
+            !isResetting &&
+            gameState &&
+            gameState.current_turn === "h" &&
+            possibleMoves.length === 0)) && (
+          <div className="game-status-overlay">
+            <div className="game-status-content">
+              {isGameOver && (
+                <h2
+                  className={`game-over-message ${
+                    winner === "Human"
+                      ? "human-wins"
+                      : winner === "Computer"
+                      ? "computer-wins"
+                      : "draw"
+                  }`}
+                >
+                  Game Over!{" "}
+                  {winner === "Draw" ? "It's a draw!" : `${winner} wins!`}
+                </h2>
+              )}
+              <div className="game-over-buttons">
+                <button onClick={startNewGame} className="new-game-button">
+                  New Game
+                </button>
+                <button onClick={handleLogout} className="logout-button">
+                  LOGOUT
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="game-container-wrapper">
+          <div className="game-info-container">
+            {message && <div className="message info-element">{message}</div>}
+            <div className="error-message-container info-element">
+              <div className={`error-message ${error ? "visible" : ""}`}>
+                {error}
+              </div>
+            </div>
+
+            <div className="turn-indicator info-element">
+              <span>Current Turn: </span>
+              <span
+                className={`current-turn ${
+                  gameState.current_turn === "h"
+                    ? "human-turn"
+                    : "computer-turn"
                 }`}
               >
-                Game Over!{" "}
-                {winner === "Draw" ? "It's a draw!" : `${winner} wins!`}
-              </h2>
+                {gameState.current_turn === "h" ? "Human" : "Computer"}
+              </span>
+            </div>
+
+            {isComputerThinking && (
+              <p className="thinking-message info-element">
+                Computer is thinking...
+              </p>
             )}
-            <div className="game-over-buttons">
-              <button onClick={startNewGame} className="new-game-button">
-                New Game
-              </button>
-              <button onClick={handleLogout} className="logout-button">
-                LOGOUT
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            <p className="info-element">
+              Moves Without Capture: {gameState.moves_without_capture}
+            </p>
 
-      <div className="game-container-wrapper">
-        <div className="game-info-container">
-          {message && <div className="message info-element">{message}</div>}
-          <div className="error-message-container info-element">
-            <div className={`error-message ${error ? "visible" : ""}`}>
-              {error}
-            </div>
+            {/* Add this new element for the "no moves" message */}
+            {!isGameOver &&
+              gameState.current_turn === "h" &&
+              possibleMoves.length === 0 && (
+                <div className="no-moves-message info-element">
+                  You have no possible moves. The game will end.
+                </div>
+              )}
           </div>
 
-          <div className="turn-indicator info-element">
-            <span>Current Turn: </span>
-            <span
-              className={`current-turn ${
-                gameState.current_turn === "h" ? "human-turn" : "computer-turn"
+          <div className="game-board-container">
+            <div className="captured-pieces human-captured">
+              <p>Human Captured: </p>
+              <div className="captured-pieces-images">
+                {renderCapturedPieces(humanCapturedPieces, "human")}
+              </div>
+            </div>
+            <div
+              className={`board ${
+                isGameOver ||
+                isResetting ||
+                (gameState.current_turn === "h" && possibleMoves.length === 0)
+                  ? "disabled"
+                  : ""
               }`}
             >
-              {gameState.current_turn === "h" ? "Human" : "Computer"}
-            </span>
-          </div>
-
-          {isComputerThinking && (
-            <p className="thinking-message info-element">
-              Computer is thinking...
-            </p>
-          )}
-          <p className="info-element">
-            Moves Without Capture: {gameState.moves_without_capture}
-          </p>
-
-          {/* Add this new element for the "no moves" message */}
-          {!isGameOver &&
-            gameState.current_turn === "h" &&
-            possibleMoves.length === 0 && (
-              <div className="no-moves-message info-element">
-                You have no possible moves. The game will end.
-              </div>
-            )}
-        </div>
-
-        <div className="game-board-container">
-          <div className="captured-pieces human-captured">
-            <p>Human Captured: </p>
-            <div className="captured-pieces-images">
-              {renderCapturedPieces(humanCapturedPieces, "human")}
-            </div>
-          </div>
-          <div
-            className={`board ${
-              isGameOver ||
-              isResetting ||
-              (gameState.current_turn === "h" && possibleMoves.length === 0)
-                ? "disabled"
-                : ""
-            }`}
-          >
-            {gameState.board.map((row, rowIndex) => (
-              <div key={rowIndex} className="row">
-                {row.map((cell, cellIndex) => (
-                  <button
-                    key={cellIndex}
-                    className={`cell 
+              {gameState.board.map((row, rowIndex) => (
+                <div key={rowIndex} className="row">
+                  {row.map((cell, cellIndex) => (
+                    <button
+                      key={cellIndex}
+                      className={`cell 
                         ${
                           selectedPiece &&
                           selectedPiece.row === rowIndex &&
@@ -719,35 +722,36 @@ const Game = () => {
                             : ""
                         }
                       `}
-                    onClick={() => handleCellClick(rowIndex, cellIndex)}
-                    disabled={
-                      isGameOver ||
-                      isResetting ||
-                      (gameState.current_turn === "h" &&
-                        possibleMoves.length === 0)
-                    }
-                  >
-                    {renderPiece(cell, rowIndex, cellIndex)}
-                  </button>
-                ))}
+                      onClick={() => handleCellClick(rowIndex, cellIndex)}
+                      disabled={
+                        isGameOver ||
+                        isResetting ||
+                        (gameState.current_turn === "h" &&
+                          possibleMoves.length === 0)
+                      }
+                    >
+                      {renderPiece(cell, rowIndex, cellIndex)}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <div className="captured-pieces computer-captured">
+              <p>Computer Captured: </p>
+              <div className="captured-pieces-images">
+                {renderCapturedPieces(computerCapturedPieces, "computer")}
               </div>
-            ))}
-          </div>
-          <div className="captured-pieces computer-captured">
-            <p>Computer Captured: </p>
-            <div className="captured-pieces-images">
-              {renderCapturedPieces(computerCapturedPieces, "computer")}
             </div>
           </div>
-        </div>
 
-        <div className="moves-history">
-          <h3>Moves History</h3>
-          <ul>
-            {movesHistory.map((move, index) => (
-              <li key={index}>{move}</li>
-            ))}
-          </ul>
+          <div className="moves-history">
+            <h3>Moves History</h3>
+            <ul>
+              {movesHistory.map((move, index) => (
+                <li key={index}>{move}</li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </div>

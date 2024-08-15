@@ -12,14 +12,32 @@ const Home = () => {
     "https://github.com/KiariiLinda/checkers-final-backend";
 
   const scrollToAbout = (e) => {
+    console.log("scrollToAbout function called");
     e.preventDefault();
-    aboutSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+    const aboutSection = document.getElementById("about");
+    console.log("About section element:", aboutSection);
+    if (aboutSection) {
+      const yOffset =
+        aboutSection.getBoundingClientRect().top + window.pageYOffset;
+      console.log("Calculated yOffset:", yOffset);
+      window.scrollTo({ top: yOffset, behavior: "smooth" });
+      console.log("Scroll initiated");
+    } else {
+      console.log("About section not found");
+    }
     setHighlightAbout(true);
-    setTimeout(() => setHighlightAbout(false), 2000);
+    setTimeout(() => {
+      setHighlightAbout(false);
+      console.log("Highlight removed");
+    }, 2000);
   };
 
   useEffect(() => {
     document.title = "Home | Checkers Game";
+  }, []);
+
+  useEffect(() => {
+    console.log("About section ref:", aboutSectionRef.current);
   }, []);
 
   return (
